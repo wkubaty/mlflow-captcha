@@ -237,3 +237,5 @@ Temporary Items
 .apdisk
 
 mlruns/
+mnist_data/
+train.ipynb

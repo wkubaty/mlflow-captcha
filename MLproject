@@ -2,5 +2,7 @@ name: mnist
 
 entry_points:
   main:
-    command: "python3 train.py"
+    parameters:
+        epochs: {type: int, default: 1}
+    command: "python3 train.py --epochs {epochs}"
 
