@@ -13,8 +13,13 @@ entry_points:
       units: {type: int, default: 512}
     command: "python3 train.py --data-file {data_file} --epochs {epochs} --units {units}"
 
+  convert:
+    parameters:
+      model_path: path
+    command: "python3 convert.py --model-path {model_path}"
+
   main:
     parameters:
       data_file: {type: string, default: "s3://mlflow-suu/mnist_raw_data/mnist_data.zip"}
       epochs: {type: int, default: 1}
-    command: "python3 main.py --data-file {data_file} --epochs {epochs} "
+    command: "python3 main.py --data-file {data_file} --epochs {epochs}"

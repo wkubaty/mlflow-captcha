@@ -25,10 +25,13 @@ def workflow(data_file, epochs):
     mlflow.create_experiment(next_exp)
     mlflow.set_experiment(next_exp)
 
-    with mlflow.start_run(run_name="load_data") as active_run:
-        load_data_run = run_entrypoint("load_data", {"data_file": data_file})
+    with mlflow.start_run():  # probably bug? (without it nesting does not work on first run in a new experiment)
+        pass
 
-    with mlflow.start_run(run_name="train") as active_run:
+    # with mlflow.start_run(run_name="load_data") as active_run:
+    load_data_run = run_entrypoint("load_data", {"data_file": data_file})
+
+    with mlflow.start_run(run_name="Hyperparameter tuning") as active_run:
         mnist_data_artifact_path = os.path.join(load_data_run.info.artifact_uri, "mnist_data")
         for units in [128, 256, 512]:
             run_entrypoint("train", {"data_file": mnist_data_artifact_path,
@@ -42,6 +45,10 @@ def workflow(data_file, epochs):
         best_run = max(runs, key=lambda r: r.data.metrics["test_accuracy"])
         mlflow.set_tag("best_run", best_run.info.run_id)
         mlflow.log_metrics({"best_accuracy": best_run.data.metrics["test_accuracy"]})
+        print("best_run", best_run)
+        model_path = os.path.join(best_run.info.artifact_uri, "model", "model.h5")
+
+    run_entrypoint("convert", {"model_path": model_path})
 
 
 if __name__ == '__main__':
