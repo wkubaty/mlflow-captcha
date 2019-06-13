@@ -6,7 +6,7 @@ import zipfile
 
 @click.command(help="Downloads mnist model.")
 @click.option("--data-file", type=click.STRING, help="Path of mnist dataset.")
-def run(data_file):
+def load_data(data_file):
 
     with mlflow.start_run() as mlrun:
         extracted_dir = os.path.splitext(data_file)[0]
@@ -21,4 +21,4 @@ def run(data_file):
 
 
 if __name__ == '__main__':
-    run()
+    load_data()

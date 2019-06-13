@@ -10,7 +10,8 @@ entry_points:
     parameters:
       data_file: path
       epochs: {type: int, default: 1}
-    command: "python3 train.py --data-file {data_file} --epochs {epochs}"
+      units: {type: int, default: 512}
+    command: "python3 train.py --data-file {data_file} --epochs {epochs} --units {units}"
 
   main:
     parameters:

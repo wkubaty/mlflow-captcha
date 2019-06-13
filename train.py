@@ -20,7 +20,8 @@ import os
 @click.command(help="Trains mnist model. The model and its metrics are logged with mlflow.")
 @click.option("--epochs", type=click.INT, default=1, help="Number of training epochs.")
 @click.option("--data-file", type=click.STRING, help="Path of mnist data.")
-def run(epochs, data_file):
+@click.option("--units", type=click.INT, help="Number of units in dense layer.")
+def train(epochs, data_file, units):
     batch_size = 128
     num_classes = 10
 
@@ -52,9 +53,9 @@ def run(epochs, data_file):
     y_test = keras.utils.to_categorical(y_test, num_classes)
 
     model = Sequential()
-    model.add(Dense(512, activation='relu', input_shape=(784,)))
+    model.add(Dense(units, activation='relu', input_shape=(784,)))
     model.add(Dropout(0.2))
-    model.add(Dense(512, activation='relu'))
+    model.add(Dense(units, activation='relu'))
     model.add(Dropout(0.2))
     model.add(Dense(num_classes, activation='softmax'))
 
@@ -79,4 +80,4 @@ def run(epochs, data_file):
 
 
 if __name__ == '__main__':
-    run()
+    train()
