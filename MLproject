@@ -4,10 +4,16 @@ entry_points:
   load_data:
     parameters:
       data_file: {type: path, default: "s3://mlflow-suu/mnist_raw_data/mnist_data.zip"}
-    command: "python3 load_data.py --data-file={data_file}"
+    command: "python3 load_data.py --data-file {data_file}"
 
   train:
     parameters:
+      data_file: path
       epochs: {type: int, default: 1}
-    command: "python3 train.py --epochs {epochs}"
+    command: "python3 train.py --data-file {data_file} --epochs {epochs}"
 
+  main:
+    parameters:
+      data_file: {type: string, default: "s3://mlflow-suu/mnist_raw_data/mnist_data.zip"}
+      epochs: {type: int, default: 1}
+    command: "python3 main.py --data-file {data_file} --epochs {epochs} "

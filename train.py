@@ -16,15 +16,17 @@ import click
 from tensorflow.contrib.learn.python.learn.datasets.mnist import extract_images, extract_labels
 import os
 
+
 @click.command(help="Trains mnist model. The model and its metrics are logged with mlflow.")
 @click.option("--epochs", type=click.INT, default=1, help="Number of training epochs.")
-def run(epochs):
+@click.option("--data-file", type=click.STRING, help="Path of mnist data.")
+def run(epochs, data_file):
     batch_size = 128
     num_classes = 10
 
     # the data, split between train and test sets
     # (x_train, y_train), (x_test, y_test) = mnist.load_data()
-    dir_name = "mnist_data"
+    dir_name = data_file
 
     with open(os.path.join(dir_name, 'train-images-idx3-ubyte.gz'), 'rb') as f:
         x_train = extract_images(f)
