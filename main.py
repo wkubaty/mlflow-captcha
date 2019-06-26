@@ -29,7 +29,14 @@ def get_next_experiment_id(experiments):
 @click.option("--duplicates", type=click.INT, default=1000,
               help="Number of duplicates of the same captcha word.")
 @click.option("--data-zipfile", type=click.STRING, help="Path of captcha data.")
-def workflow(epochs, kernel_sizes, width, height, dict_path, n_words, duplicates, data_zipfile):
+@click.option("--region", type=click.STRING, default="eu-central-1", help="Region of sagemaker.")
+@click.option("--execution-role-arn", type=click.STRING, help="Execution role arn.")
+@click.option("--instance-type", type=click.STRING, default="ml.t2.medium",
+              help="Instance you want to run your model on.")
+@click.option("--app-name", type=click.STRING, default="captcha", help="Name of your app.")
+@click.option("--model-uri", type=click.STRING, default="None", help="Path of model to retrain.")
+def workflow(epochs, kernel_sizes, width, height, dict_path, n_words, duplicates, data_zipfile, region,
+             execution_role_arn, instance_type, app_name, model_uri):
     next_id = get_next_experiment_id(mlflow.tracking.MlflowClient().list_experiments())
     next_exp = "Captcha #{}".format(next_id)
     mlflow.create_experiment(next_exp)
@@ -38,7 +45,7 @@ def workflow(epochs, kernel_sizes, width, height, dict_path, n_words, duplicates
     with mlflow.start_run():  # probably bug? (without it nesting does not work on first run in a new experiment)
         pass
 
-    if data_zipfile == 'None':  # workaround
+    if data_zipfile == 'None':  # workaround for not specifying
         print("No data zipfile. Trying to generate data.")
         run_entrypoint("generate", {
             "width": width, "height": height, "dict_path": dict_path, "n_words": n_words, "duplicates": duplicates,
@@ -53,17 +60,20 @@ def workflow(epochs, kernel_sizes, width, height, dict_path, n_words, duplicates
             captcha = os.path.splitext(data_zipfile)[0]
         else:
             captcha = "output"
+        if model_uri != "None":
+            kernel_sizes = [-1] # kernels doesnt matter in retraining mode
 
         for kernel_size in [int(kernel) for kernel in kernel_sizes.split()]:
             run_entrypoint("train", {
                 "epochs": epochs,
-                "kernel-size": kernel_size,
+                "kernel_size": kernel_size,
                 "width": width,
                 "height": height,
                 "dict_path": dict_path,
                 "n_words": n_words,
                 "duplicates": duplicates,
-                "data-dir": captcha})
+                "data_dir": captcha,
+                "model_uri": model_uri})
 
         client = MlflowClient()
         runs = client.search_runs([str(next_id)],
@@ -76,6 +86,13 @@ def workflow(epochs, kernel_sizes, width, height, dict_path, n_words, duplicates
         model_path = os.path.join(best_run.info.artifact_uri, "model", "model.h5")
 
     run_entrypoint("convert", {"model_path": model_path})
+    run_entrypoint("deploy", {"run_id": best_run.info.run_id,
+                              "region": region,
+                              "execution_role_arn": execution_role_arn,
+                              "instance_type": instance_type,
+                              "app_name": app_name
+                              })
+
 
 
 if __name__ == '__main__':

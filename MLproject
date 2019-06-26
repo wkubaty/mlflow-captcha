@@ -26,12 +26,22 @@ entry_points:
       n_words: {type: int, default: 100}
       duplicates: {type: int, default: 1000}
       data_dir: {type: path, default: output}
-    command: "python3 train.py --epochs {epochs} --kernel-size {kernel_size} --width {width} --height {height} --dict-path {dict_path} --n-words {n_words} --duplicates {duplicates} --data-dir {data_dir} "
+      model_uri: {type: string, default: None}
+    command: "python3 train.py --epochs {epochs} --kernel-size {kernel_size} --width {width} --height {height} --dict-path {dict_path} --n-words {n_words} --duplicates {duplicates} --data-dir {data_dir} --model-uri {model_uri}"
 
   convert:
     parameters:
       model_path: path
     command: "python3 convert.py --model-path {model_path}"
+
+  deploy:
+    parameters:
+      run_id: string
+      region: {type: string, default: "eu-central-1"}
+      execution_role_arn: string
+      instance_type: {type: string, default: "ml.t2.xlarge"}
+      app_name: {type: string, default: "captcha"}
+    command: "python3 deploy.py  --run-id {run_id} --region {region} --execution-role-arn {execution_role_arn} --instance-type {instance_type} --app-name {app_name}"
 
   main:
     parameters:
@@ -43,4 +53,9 @@ entry_points:
       n_words: {type: int, default: 100}
       duplicates: {type: int, default: 1000}
       data_zipfile: {type: string, default: None}
-    command: "python3 main.py --epochs {epochs} --kernel-sizes {kernel_sizes} --width {width} --height {height} --dict-path {dict_path} --n-words {n_words} --duplicates {duplicates} --data-zipfile {data_zipfile}"
+      region: {type: string, default: "eu-central-1"}
+      execution_role_arn: string
+      instance_type: {type: string, default: "ml.t2.xlarge"}
+      app_name: {type: string, default: "captcha"}
+      model_uri: {type: string, default: None}
+    command: "python3 main.py --epochs {epochs} --kernel-sizes {kernel_sizes} --width {width} --height {height} --dict-path {dict_path} --n-words {n_words} --duplicates {duplicates} --data-zipfile {data_zipfile} --region {region} --execution-role-arn {execution_role_arn} --instance-type {instance_type} --app-name {app_name} --model-uri {model_uri}"

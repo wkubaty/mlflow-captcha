@@ -45,7 +45,8 @@ def load_data(n, dir_path, word_list, img_rows, img_cols):
 @click.option("--duplicates", type=click.INT, default=1000,
               help="Number of duplicates of the same captcha word.")
 @click.option("--data-dir", type=click.STRING, default="output", help="Path of captcha data.")
-def train(epochs, kernel_size, width, height, dict_path, n_words, duplicates, data_dir):
+@click.option("--model-uri", type=click.STRING, default="None", help="Path of model to retrain.")
+def train(epochs, kernel_size, width, height, dict_path, n_words, duplicates, data_dir, model_uri):
     img_width = width
     img_height = height
     img_cols = img_width // 2
@@ -74,22 +75,27 @@ def train(epochs, kernel_size, width, height, dict_path, n_words, duplicates, da
     y_train = keras.utils.to_categorical(y_train, num_classes)
     y_test = keras.utils.to_categorical(y_test, num_classes)
 
-    model = Sequential()
-    model.add(Reshape((30, 80, 1), input_shape=(30 * 80,)))
-    model.add(Conv2D(32, kernel_size=(kernel_size, kernel_size),
-                     activation='relu',
-                     input_shape=input_shape))
-    model.add(Conv2D(64, (3, 3), activation='relu'))
-    model.add(MaxPooling2D(pool_size=(2, 2)))
-    model.add(Dropout(0.25))
-    model.add(Flatten())
-    model.add(Dense(128, activation='relu'))
-    model.add(Dropout(0.5))
-    model.add(Dense(num_classes, activation='softmax'))
+    if model_uri != "None":
+        print("Found model, retraining...")
+        model = mlflow.keras.load_model(model_uri)
+    else:
+        print("No model given, creating new one...")
+        model = Sequential()
+        model.add(Reshape((30, 80, 1), input_shape=(30 * 80,)))
+        model.add(Conv2D(32, kernel_size=(kernel_size, kernel_size),
+                         activation='relu',
+                         input_shape=input_shape))
+        model.add(Conv2D(64, (3, 3), activation='relu'))
+        model.add(MaxPooling2D(pool_size=(2, 2)))
+        model.add(Dropout(0.25))
+        model.add(Flatten())
+        model.add(Dense(128, activation='relu'))
+        model.add(Dropout(0.5))
+        model.add(Dense(num_classes, activation='softmax'))
 
-    model.compile(loss=keras.losses.categorical_crossentropy,
-                  optimizer=keras.optimizers.Adadelta(),
-                  metrics=['accuracy'])
+        model.compile(loss=keras.losses.categorical_crossentropy,
+                      optimizer=keras.optimizers.Adadelta(),
+                      metrics=['accuracy'])
 
     callbacks = [TensorBoard(log_dir='./logs')]
     model.fit(x_train, y_train,
