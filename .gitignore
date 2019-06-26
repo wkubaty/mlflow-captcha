@@ -238,4 +238,7 @@ Temporary Items
 
 mlruns/
 mnist_data/
+output/
+output.zip
+logs/
 train.ipynb

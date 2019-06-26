@@ -1,6 +1,6 @@
-import click
 import os
 
+import click
 import mlflow
 from mlflow.tracking import MlflowClient
 
@@ -15,28 +15,55 @@ def run_entrypoint(entrypoint, parameters):
 def get_next_experiment_id(experiments):
     return int(max(experiments, key=lambda k: int(k.experiment_id)).experiment_id) + 1
 
-@click.command()
-@click.option("--data-file", type=click.STRING)
-@click.option("--epochs", type=click.INT)
-def workflow(data_file, epochs):
 
+@click.command("Runs entire workflow")
+@click.option("--epochs", type=click.INT, default=1, help="Number of training epochs.")
+@click.option("--kernel-sizes", type=click.STRING, default="3 5", help="Kernel sizes as hyperparameter tuning.")
+@click.option("--width", type=click.INT, default=160, help="Width of image.")
+@click.option("--height", type=click.INT, default=60, help="Height of image.")
+@click.option("--dict-path", type=click.STRING,
+              default="generator/google-10000-english-master/google-10000-english-usa-no-swears-medium.txt",
+              help="Path of dict containing words.")
+@click.option("--n-words", type=click.INT, default=100,
+              help="Number of different words.")
+@click.option("--duplicates", type=click.INT, default=1000,
+              help="Number of duplicates of the same captcha word.")
+@click.option("--data-zipfile", type=click.STRING, help="Path of captcha data.")
+def workflow(epochs, kernel_sizes, width, height, dict_path, n_words, duplicates, data_zipfile):
     next_id = get_next_experiment_id(mlflow.tracking.MlflowClient().list_experiments())
-    next_exp = "Mnist #{}".format(next_id)
+    next_exp = "Captcha #{}".format(next_id)
     mlflow.create_experiment(next_exp)
     mlflow.set_experiment(next_exp)
 
     with mlflow.start_run():  # probably bug? (without it nesting does not work on first run in a new experiment)
         pass
 
-    # with mlflow.start_run(run_name="load_data") as active_run:
-    load_data_run = run_entrypoint("load_data", {"data_file": data_file})
+    if data_zipfile == 'None':  # workaround
+        print("No data zipfile. Trying to generate data.")
+        run_entrypoint("generate", {
+            "width": width, "height": height, "dict_path": dict_path, "n_words": n_words, "duplicates": duplicates,
+            "output_dir": "output"})
+    else:
+        # with mlflow.start_run(run_name="load_data") as active_run:
+        run_entrypoint("load_data", {"data_zipfile": data_zipfile})
 
     with mlflow.start_run(run_name="Hyperparameter tuning") as active_run:
-        mnist_data_artifact_path = os.path.join(load_data_run.info.artifact_uri, "mnist_data")
-        for units in [128, 256, 512]:
-            run_entrypoint("train", {"data_file": mnist_data_artifact_path,
-                                         "epochs": epochs,
-                                         "units": units})
+        # captcha = os.path.join(load_data_run.info.artifact_uri, os.path.splitext(data_zipfile)[0])
+        if data_zipfile:
+            captcha = os.path.splitext(data_zipfile)[0]
+        else:
+            captcha = "output"
+
+        for kernel_size in [int(kernel) for kernel in kernel_sizes.split()]:
+            run_entrypoint("train", {
+                "epochs": epochs,
+                "kernel-size": kernel_size,
+                "width": width,
+                "height": height,
+                "dict_path": dict_path,
+                "n_words": n_words,
+                "duplicates": duplicates,
+                "data-dir": captcha})
 
         client = MlflowClient()
         runs = client.search_runs([str(next_id)],

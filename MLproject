@@ -1,17 +1,32 @@
-name: mnist
+name: captcha
 
 entry_points:
   load_data:
     parameters:
-      data_file: {type: path, default: "s3://mlflow-suu/mnist_raw_data/mnist_data.zip"}
-    command: "python3 load_data.py --data-file {data_file}"
+      data_zipfile: {type: path, default: "s3://mlflow-suu/captcha_raw_data/output.zip"}
+    command: "python3 load_data.py --data-zipfile {data_zipfile}"
+
+  generate:
+    parameters:
+      width: {type: int, default: 160}
+      height: {type: int, default: 60}
+      dict_path: {type: string, default: "generator/google-10000-english-master/google-10000-english-usa-no-swears-medium.txt"}
+      n_words: {type: int, default: 100}
+      duplicates: {type: int, default: 1000}
+      output_dir: {type: string, default: "output"}
+    command: "python3 generate.py --width {width} --height {height} --dict-path {dict_path} --n-words {n_words} --duplicates {duplicates} --output-dir {output_dir}"
 
   train:
     parameters:
-      data_file: path
       epochs: {type: int, default: 1}
-      units: {type: int, default: 512}
-    command: "python3 train.py --data-file {data_file} --epochs {epochs} --units {units}"
+      kernel_size: {type: int, default: 3}
+      width: {type: int, default: 160}
+      height: {type: int, default: 60}
+      dict_path: {type: string, default: "generator/google-10000-english-master/google-10000-english-usa-no-swears-medium.txt"}
+      n_words: {type: int, default: 100}
+      duplicates: {type: int, default: 1000}
+      data_dir: {type: path, default: output}
+    command: "python3 train.py --epochs {epochs} --kernel-size {kernel_size} --width {width} --height {height} --dict-path {dict_path} --n-words {n_words} --duplicates {duplicates} --data-dir {data_dir} "
 
   convert:
     parameters:
@@ -20,6 +35,12 @@ entry_points:
 
   main:
     parameters:
-      data_file: {type: string, default: "s3://mlflow-suu/mnist_raw_data/mnist_data.zip"}
       epochs: {type: int, default: 1}
-    command: "python3 main.py --data-file {data_file} --epochs {epochs}"
+      kernel_sizes: {type: string, default: "3 5"}
+      width: {type: int, default: 160}
+      height: {type: int, default: 60}
+      dict_path: {type: string, default: "generator/google-10000-english-master/google-10000-english-usa-no-swears-medium.txt"}
+      n_words: {type: int, default: 100}
+      duplicates: {type: int, default: 1000}
+      data_zipfile: {type: string, default: None}
+    command: "python3 main.py --epochs {epochs} --kernel-sizes {kernel_sizes} --width {width} --height {height} --dict-path {dict_path} --n-words {n_words} --duplicates {duplicates} --data-zipfile {data_zipfile}"

@@ -1,7 +1,8 @@
-import tensorflow as tf
-import click
 import os
+
+import click
 import mlflow
+import tensorflow as tf
 
 
 @click.command(help="Converts keras model to tflite.")
