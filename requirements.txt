@@ -2,7 +2,7 @@ scikit-learn
 numpy
 cv2
 mlflow==1.0.0
-tensorflow==1.13.1
+tensorflow==2.5.1
 Keras==2.2.4
 boto3==1.9.156
 captcha
